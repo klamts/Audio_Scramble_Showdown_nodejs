@@ -30,7 +30,8 @@ const io = new SocketIOServer(server, {
     origin: [
       'http://localhost:5173',
       'http://localhost:3000',
-      'https://klamts.github.io'
+      'https://klamts.github.io',
+      'https://google-labs-studio-project-proxy.googleusercontent.com'
     ],
     methods: ['GET', 'POST'],
     credentials: true
