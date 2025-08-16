@@ -9,22 +9,33 @@ import { Server as SocketIOServer } from 'socket.io';
 // Khởi tạo Express + Socket.IO
 // =======================
 const app = express();
+// Middleware Express
+app.use(cors({
+  origin: [
+    'http://localhost:5173',
+    'http://localhost:3000',
+    'https://klamts.github.io'
+  ],
+  methods: ['GET', 'POST'],
+  credentials: true
+}));
+
+
+// HTTP server
 const server = http.createServer(app);
 
+// Socket.IO server với CORS riêng
 const io = new SocketIOServer(server, {
   cors: {
     origin: [
       'http://localhost:5173',
       'http://localhost:3000',
-      process.env.CORS_ORIGIN
-    ].filter(Boolean),
+      'https://klamts.github.io'
+    ],
     methods: ['GET', 'POST'],
-  },
+    credentials: true
+  }
 });
-
-app.use(cors());
-app.use(express.json());
-
 // Health check cho Render
 app.get('/health', (req, res) => res.send('ok'));
 app.get('/', (req, res) => res.send('Realtime game server is running'));
@@ -156,9 +167,9 @@ io.on('connection', (socket) => {
       if (idx !== -1) {
         const [removed] = room.players.splice(idx, 1);
         io.to(roomCode).emit('update-player-list', room.players);
-        console.log(`👋 ${removed.name} left room ${roomCode}`);
+        if (removed) console.log(`👋 ${removed.name} left room ${roomCode}`);
         // Nếu host rời phòng thì giải tán phòng
-        if (removed.isHost) {
+        if (removed && removed.isHost) {
           io.to(roomCode).emit('error', 'Host has left. Room closed.');
           delete rooms[roomCode];
           console.log(`💥 Room ${roomCode} closed because host left`);
@@ -167,9 +178,7 @@ io.on('connection', (socket) => {
     }
   });
 });
-app.get('/health', (req, res) => {
-  res.status(200).send('OK');
-});
+
 // =======================
 // Khởi chạy server
 // =======================
