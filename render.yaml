@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: Audio_Scramble_Showdown_nodejs   # Tên service của bạn (thay đổi nếu muốn)
+    env: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    autoDeploy: true
+    healthCheckPath: /health
+    envVars:
+      - key: CORS_ORIGIN
+        value: https://your-frontend.onrender.com
