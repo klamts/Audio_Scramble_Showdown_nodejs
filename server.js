@@ -11,17 +11,41 @@ import { Server as SocketIOServer } from 'socket.io';
 const app = express();
 const server = http.createServer(app);
 
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://localhost:3000',
+  'https://klamts.github.io',
+  'https://google-labs-studio-project-proxy.googleusercontent.com'
+];
+
 const io = new SocketIOServer(server, {
   cors: {
-    origin: [
-      'http://localhost:5173',
-      'http://localhost:3000',
-      'https://klamts.github.io',
-      'https://google-labs-studio-project-proxy.googleusercontent.com', // Added AI Studio Origin
-      process.env.CORS_ORIGIN
-    ].filter(Boolean),
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true); // request từ non-browser
+
+      try {
+        // Nếu origin nằm trong whitelist
+        if (allowedOrigins.includes(origin)) {
+          return callback(null, true);
+        }
+
+        // Kiểm tra subdomain usercontent.goog
+        const hostname = new URL(origin).hostname;
+        const parts = hostname.split('.');
+        const domainSuffix = parts.slice(-2).join('.');
+        if (domainSuffix === 'usercontent.goog') {
+          return callback(null, true);
+        }
+
+        // Không hợp lệ
+        return callback(new Error('CORS not allowed'));
+      } catch (err) {
+        return callback(new Error('Invalid origin'));
+      }
+    },
     methods: ['GET', 'POST'],
-  },
+    credentials: true,
+  }
 });
 
 app.use(cors());
